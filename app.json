@@ -42,6 +42,11 @@
         }
       ],
       "@react-native-firebase/messaging"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "1dcd3be9-bed4-49cd-bc59-e1f299523915"
+      }
+    }
   }
 }
