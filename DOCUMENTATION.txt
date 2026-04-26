@@ -1,0 +1,529 @@
+🪷 VEGA HUB MANAGER APP — COMPLETE DOCUMENTATION
+════════════════════════════════════════════════════════
+App Name     : VEGA Hub Manager
+Version      : 2.0
+Platform     : Android + iOS
+Bundle ID    : com.vegavizag.hubmanager
+Theme        : Dark Blue
+Firebase     : vega-home-service (same project as all VEGA apps)
+Built        : April 2026 — VEGA Home Services, Visakhapatnam
+════════════════════════════════════════════════════════
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FILES IN THIS FOLDER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+App.js           → Complete app code (1030 lines)
+package.json     → All dependencies
+app.json         → Expo + Firebase build config
+eas.json         → EAS build profiles
+babel.config.js  → Transpiler config
+
+YOU MUST ADD (copy from Customer App folder):
+  google-services.json       → Firebase Android config
+  GoogleService-Info.plist   → Firebase iOS config
+  assets/                    → Icon + splash screen folder
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHO USES THIS APP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Hub Managers — senior staff who manage the Madhurawada hub.
+
+DIFFERENCE FROM ADMIN APP:
+  Admin App (your iPhone) → Full access, all hubs, revenue, promos, all settings
+  Hub Manager App         → Hub-level operations: assign workers, manage team, resolve complaints
+
+DIFFERENCE FROM WORKER APP:
+  Worker App      → Sees ONLY their own assigned jobs, NO pricing
+  Hub Manager App → Sees ALL bookings, CAN see pricing and revenue
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT THIS APP DOES — COMPLETE FUNCTIONALITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+──────────────────────────────────
+1. AUTHENTICATION
+──────────────────────────────────
+
+✅ DONE — Phone OTP via Firebase Auth
+
+Only workers with role = "hub_manager" can login.
+
+On OTP verification:
+  → Checks workers collection where phone == entered_number
+  → AND where role == "hub_manager"
+  → If not found: "Not registered as Hub Manager"
+  → If found: Login success
+
+FCM token registered for push notifications.
+
+──────────────────────────────────
+2. DASHBOARD TAB 🏠
+──────────────────────────────────
+
+✅ DONE — Real-time live dashboard
+
+STATS SHOWN:
+  📦 Today's Bookings (count)
+  💰 Today's Revenue (₹)
+  ⚡ In Progress jobs (count)
+  🚨 Unassigned bookings (count — red alert if > 0)
+  ✅ Available staff (count)
+  ⭐ Average rating (from completed jobs)
+
+URGENT ALERTS (top of screen, red banner):
+  → If unassigned bookings exist: "X Bookings Need Assignment!"
+  → Tapping takes directly to Bookings tab, filtered to Unassigned
+  → If open complaints: "X Open Complaints" (gold banner)
+
+LIVE WORKER STATUS:
+  → Shows all team members
+  → Green dot = Free/Available
+  → Orange dot = On Job (isAvailable = false)
+  → Red = Suspended/Blocked
+  → One-tap call button for each worker
+
+RECENT BOOKINGS:
+  → Last 5 bookings with status badges
+  → Shows customer name, order ID, revenue, time
+  → Tap any to open full booking detail
+
+──────────────────────────────────
+3. BOOKINGS TAB 📦
+──────────────────────────────────
+
+✅ DONE — Complete booking management
+
+FILTER TABS:
+  All         → All bookings ever (real-time)
+  Unassigned  → Status = "confirmed" — needs worker
+  Active      → Status = assigned / on_the_way / in_progress
+  Completed   → Status = "completed"
+
+EACH BOOKING CARD SHOWS:
+  - Order ID
+  - Customer name + phone
+  - Address
+  - Service type
+  - Scheduled time/slot
+  - Status badge (colored)
+  - Assigned worker name (or "Needs assignment" in red)
+  - Revenue amount (₹) — Hub manager CAN see this
+  - Delay flag warning ⚠️
+  - Time since booking
+
+QUICK ASSIGN BUTTON:
+  → If status = "confirmed" → "Assign Now" button on card
+  → Opens assignment screen directly
+
+──────────────────────────────────
+4. JOB DETAIL SCREEN
+──────────────────────────────────
+
+✅ DONE — Full booking detail
+
+INFORMATION VISIBLE:
+  Customer name, phone, address, slot
+  Service items + prices (hub manager can see)
+  Total amount ₹
+  OTP (4-digit code to start service)
+  Status timeline
+  Photo proof count (Before: X, After: X)
+  Assigned worker info
+  Delay flags
+
+ACTIONS:
+  📞 Call Customer (one tap → phone dialer)
+  📞 Call Worker (one tap → phone dialer)
+  👩 Assign Professional → opens smart assignment
+  🔄 Reassign (if already assigned)
+  ⚡ Update Status (manual override — all statuses)
+
+──────────────────────────────────
+5. SMART WORKER ASSIGNMENT
+──────────────────────────────────
+
+✅ DONE — Intelligent worker suggestion
+
+When assigning a worker, the system:
+  1. Filters: isAvailable = true AND status = "active"
+  2. Sorts by: ratingAvg DESC, then totalJobsCompleted DESC
+  3. Displays sorted list with best match first
+  4. Shows "⭐ BEST MATCH" gold badge on top worker
+
+Worker card shows:
+  - Name and first letter avatar
+  - Area and star rating
+  - Jobs done count
+  - Free/Busy status badge
+
+On selecting a worker:
+  → Firestore update:
+      jobs/{jobId}.assignedWorkerId = worker.id
+      jobs/{jobId}.assignedWorkerName = worker.name
+      jobs/{jobId}.assignedWorkerPhone = worker.phone
+      jobs/{jobId}.status = "assigned"
+      jobs/{jobId}.assignedAt = server timestamp
+
+REASSIGN:
+  → Same flow — can reassign at any time
+  → New worker gets the job
+  → Previous assignment overwritten
+
+──────────────────────────────────
+6. TEAM MANAGEMENT TAB 👥
+──────────────────────────────────
+
+✅ DONE — Full team visibility and control
+
+TEAM LIST:
+  All workers in the hub
+  Shows: Name, phone, area, rating, jobs done
+  Status dots: Active/Free, Active/On Job, Suspended, Blocked
+  One-tap call button
+  Tap any worker → Worker Detail screen
+
+ADD WORKER:
+  → "+" button opens Add Worker form
+  → Fields: Name, Phone, Role (Worker/Hub Manager), Area
+  → Creates worker document in Firestore
+  → Worker can immediately login with their phone
+
+WORKER DETAIL SCREEN:
+  - Full profile (name, phone, status, rating)
+  - Performance stats (jobs done, performance score)
+  - Attendance data
+  - Earnings visible to hub manager
+  - Worker control panel (Active/Suspend/Block)
+
+WORKER CONTROL (3 states):
+  ● ACTIVE   → Normal state, can login, receives jobs
+  ● SUSPENDED → Cannot receive new jobs, can still login
+  ● BLOCKED  → Cannot login at all (enforced in Worker App)
+
+When you block a worker:
+  → workers/{id}.status = "blocked"
+  → If blocked worker tries to login → "Account Blocked" error
+  → They cannot access the app at all
+
+──────────────────────────────────
+7. COMPLAINTS TAB 🧾
+──────────────────────────────────
+
+✅ DONE — Complete complaint management
+
+COMPLAINTS LIST:
+  Shows all complaints from complaints collection
+  Status badges: Open (red), In-Progress (gold), Resolved (green)
+  Customer name, job ID, issue text, time
+
+COMPLAINT DETAIL:
+  Full complaint information
+  Resolution text input
+  "✅ Mark Resolved" button
+
+ON RESOLVING:
+  → complaints/{id}.status = "resolved"
+  → complaints/{id}.resolution = text entered
+  → complaints/{id}.resolvedAt = timestamp
+
+Open complaints count shown as badge on tab icon.
+
+NOTE: Complaints are created by customers or admin.
+Hub Manager can view and resolve them.
+
+──────────────────────────────────
+8. REVENUE VISIBILITY
+──────────────────────────────────
+
+✅ DONE — Hub Manager CAN see all pricing
+
+Unlike Worker App, Hub Manager sees:
+  - Job amounts (jobs/{jobId}.amount or .total)
+  - Daily revenue on dashboard
+  - Worker earnings (in Worker Detail screen)
+
+This data is NEVER sent to Worker App.
+
+──────────────────────────────────
+9. PUSH NOTIFICATIONS
+──────────────────────────────────
+
+✅ DONE — FCM receiving
+  - Token saved on login
+  - Foreground alerts shown
+
+❌ NOT DONE — FCM sending (needs Cloud Functions)
+  Same limitation as Worker App.
+  Hub Manager needs notifications for:
+    → New customer booking arrives
+    → Worker rejected a job
+    → Delay flag triggered
+
+──────────────────────────────────
+10. PROFILE TAB
+──────────────────────────────────
+
+✅ DONE:
+  - Manager name and phone
+  - Hub and area info
+  - Hub statistics (total jobs, revenue, team size)
+  - Open complaints count
+  - Logout
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIRESTORE COLLECTIONS USED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+READS FROM:
+  workers        → All workers in hub (real-time)
+  jobs           → All bookings (real-time)
+  complaints     → All complaints (real-time)
+
+WRITES TO:
+  jobs/{jobId}:
+    assignedWorkerId, assignedWorkerName, assignedWorkerPhone
+    status, assignedAt, reassignedAt
+    [any status field via manual override]
+
+  workers/{id}:
+    status (active/suspended/blocked)
+    isAvailable
+    name, phone, role, area, services
+    salary, performanceScore
+
+  complaints/{id}:
+    status, resolution, resolvedAt
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SCALABILITY — READY FOR 500+ CUSTOMERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Firestore real-time listeners:
+  → Jobs listener: loads last 100 bookings
+  → Workers listener: loads all active workers
+  → Complaints listener: loads last 50
+
+For high-volume (500+ bookings/day):
+  → Increase .limit(100) to .limit(500) in the listeners
+  → Add index on (createdAt, status) in Firebase Console
+  → Firestore auto-scales — no server changes needed
+
+Firebase Blaze plan supports:
+  → Unlimited reads/writes
+  → Automatic horizontal scaling
+  → No downtime during traffic spikes
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HOW TO SET UP A HUB MANAGER BEFORE LOGIN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+IMPORTANT: Role must be EXACTLY "hub_manager"
+
+Method 1 — Via Admin App:
+  Team → Add Employee → Select "Hub Manager"
+
+Method 2 — Firebase Console:
+  Firestore → workers → Add document:
+  {
+    id: "worker_9876543210",
+    name: "Ravi Kumar",
+    phone: "9876543210",
+    role: "hub_manager",          ← MUST BE EXACTLY "hub_manager"
+    status: "active",
+    isAvailable: true,
+    isActive: true,
+    currentArea: "Madhurawada",
+    hubId: "HUB_MADHURAWADA",
+    ratingAvg: 4.9,
+    totalJobsCompleted: 0
+  }
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HOW TO TEST THE APP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TEST 1 — Login
+  1. Install APK
+  2. Enter number registered as hub_manager
+  3. Enter OTP
+  Expected: Dashboard loads with live stats ✅
+
+TEST 2 — Login Rejection
+  1. Try with number NOT in workers collection
+  Expected: "Not registered as Hub Manager" ✅
+
+TEST 3 — Dashboard Stats
+  1. Customer places a booking (via Customer App)
+  Expected: Unassigned count increases ✅
+  Expected: Red alert banner appears ✅
+  Expected: Today's bookings count increases ✅
+
+TEST 4 — Assign Worker to Booking
+  1. See unassigned booking in Bookings tab
+  2. Tap booking → "Assign Professional Now"
+  3. See smart suggestion list (sorted by rating)
+  4. Tap a worker
+  Expected: Booking status changes to "Assigned" ✅
+  Expected: Worker sees job in their Worker App ✅
+  Expected: Smart suggestion shows "⭐ BEST MATCH" on top worker ✅
+
+TEST 5 — Smart Suggestion Order
+  1. Have 3+ workers in Firestore with different ratings
+  2. Open assign screen
+  Expected: Workers sorted by ratingAvg descending ✅
+  Expected: Highest rated available worker at top ✅
+
+TEST 6 — Block a Worker
+  1. Team tab → tap any worker → Worker Detail
+  2. Tap "Block" button → Confirm
+  Expected: workers/{id}.status = "blocked" in Firebase ✅
+  3. That worker tries to login via Worker App
+  Expected: "Account Blocked" error — cannot enter app ✅
+
+TEST 7 — Suspend a Worker
+  1. Same as above but tap "Suspend"
+  Expected: workers/{id}.status = "suspended" ✅
+  Expected: Worker still can login but cannot receive new jobs ✅
+  (Note: new job assignment filtering by status = "active" only)
+
+TEST 8 — Add New Worker
+  1. Team tab → "+ Add Worker" button
+  2. Fill name, phone, role, area
+  3. Save
+  Expected: New document in workers collection ✅
+  Expected: That phone can now login to Worker App ✅
+
+TEST 9 — Complaint Resolution
+  1. Create a complaint manually in Firebase Console:
+     complaints collection → {
+       customerName: "Test Customer",
+       jobId: "VG123",
+       issue: "Worker was late",
+       status: "open"
+     }
+  2. Open Hub Manager App → Complaints tab
+  3. Tap the complaint → type resolution → Mark Resolved
+  Expected: status changes to "resolved" ✅
+  Expected: Badge count on Complaints tab decreases ✅
+
+TEST 10 — Revenue Visibility
+  1. Complete a booking with ₹299 total
+  Expected: Hub Manager dashboard shows ₹ amounts ✅
+  Expected: Worker App shows the same job with NO ₹ amount ✅
+
+TEST 11 — Reassign Worker
+  1. Open an assigned booking
+  2. Tap "Reassign" button
+  3. Select different worker
+  Expected: New worker assigned ✅
+  Expected: Old worker's job disappears from their Worker App ✅
+  Expected: New worker sees job in their Worker App ✅
+
+TEST 12 — Delay Flag Visibility
+  1. Worker triggers delay (>15 min between assigned → started)
+  Expected: "⚠️ Delay" badge on booking card ✅
+  Expected: delayFlag = true visible in Firestore ✅
+
+TEST 13 — High Volume (500+ bookings)
+  1. Create multiple test bookings via Customer App
+  Expected: All appear in real-time in Hub Manager bookings ✅
+  Expected: Filter tabs work correctly ✅
+  Expected: App remains fast (Firestore auto-scales) ✅
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BUILD COMMANDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Step 1: Create folder
+  C:\Users\MaheshPappala\Desktop\My Business\VEGA-HubManager-App\
+
+Step 2: Place all files from this folder
+
+Step 3: Copy Firebase files from Customer App:
+  google-services.json
+  GoogleService-Info.plist
+  assets/ folder
+
+Step 4: Setup
+  cd "C:\Users\MaheshPappala\Desktop\My Business\VEGA-HubManager-App"
+  npm install
+  eas init
+
+Step 5: Build Android APK
+  set EAS_NO_VCS=1 && eas build --platform android --profile preview
+
+Step 6: Build iOS
+  set EAS_NO_VCS=1 && eas build --platform ios --profile preview
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT IS DONE ✅
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[✅] Phone OTP login — hub_manager role only
+[✅] Dashboard with live stats (real-time Firestore)
+[✅] Revenue visible to hub manager
+[✅] Urgent alert banners (unassigned, complaints)
+[✅] All bookings with filter tabs (All/Unassigned/Active/Done)
+[✅] Booking detail — full info including price
+[✅] Smart worker suggestion (sorted by rating + availability)
+[✅] "Best Match" badge on top suggested worker
+[✅] Assign worker to booking
+[✅] Reassign worker
+[✅] Manual status override (all job statuses)
+[✅] Call customer from booking detail
+[✅] Call worker from booking detail
+[✅] Photo proof count visible (before/after)
+[✅] Delay flag visible on bookings
+[✅] OTP visible to hub manager
+[✅] Team tab — all workers with status
+[✅] Add new worker
+[✅] Worker detail screen
+[✅] Worker status control (Active / Suspend / Block)
+[✅] Complaint system — view and resolve
+[✅] Complaint resolution tracking
+[✅] FCM token registration + notification receiving
+[✅] Profile with hub statistics
+[✅] Real-time listeners on all 3 collections
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT IS NOT DONE ❌ (Phase 2)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[❌] Live map showing worker locations
+     → Workers send location pings ✅ (timestamp only)
+     → Map display needs expo-location + react-native-maps
+     → Fix: 2-3 days
+
+[❌] FCM notification SENDING
+     → Receiving works ✅
+     → Sending needs Firebase Cloud Functions
+     → Needed for: new booking alert, worker rejection, delay warning
+     → Fix: 1-2 days for Cloud Functions setup
+
+[❌] Worker leave management
+     → Currently toggle availability only
+     → Full leave calendar with dates: Phase 2
+
+[❌] Performance scoring system
+     → Field exists in Firestore ✅
+     → Auto-calculation based on ratings + delays: Phase 2
+
+[❌] Photo viewer
+     → Photo count visible ✅
+     → Actually viewing photos needs Image component + URL rendering
+     → Fix: Half day
+
+[❌] Export reports (PDF/Excel)
+     → Revenue reports as file export: Phase 2
+
+[❌] Subscription booking management
+     → Daily/weekly/monthly bookings: Phase 2
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🪷 JAI VEGA | JAI VINAYAKA | JAI KRISHNA | JAI VIZAG 🌊
+
+VEGA HOME SERVICES PRIVATE LIMITED
+Visakhapatnam, Andhra Pradesh — 2026
