@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "725591369461",
+    "project_id": "vega-home-service",
+    "storage_bucket": "vega-home-service.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:725591369461:android:575aee5294517bb0b9c7bc",
+        "android_client_info": {
+          "package_name": "com.vegavizag.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0bmYXO95_OlYWtni7ajZVu1CRWADV7WM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
