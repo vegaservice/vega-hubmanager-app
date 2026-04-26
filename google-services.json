@@ -7,9 +7,66 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:725591369461:android:fe4656543cd8f7b9b9c7bc",
+        "android_client_info": {
+          "package_name": "com.vegavizag.admin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0bmYXO95_OlYWtni7ajZVu1CRWADV7WM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:725591369461:android:575aee5294517bb0b9c7bc",
         "android_client_info": {
           "package_name": "com.vegavizag.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0bmYXO95_OlYWtni7ajZVu1CRWADV7WM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:725591369461:android:da8ce9ffc2d4a09db9c7bc",
+        "android_client_info": {
+          "package_name": "com.vegavizag.hubmanager"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0bmYXO95_OlYWtni7ajZVu1CRWADV7WM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:725591369461:android:9a7ff16e943f360fb9c7bc",
+        "android_client_info": {
+          "package_name": "com.vegavizag.worker"
         }
       },
       "oauth_client": [],
