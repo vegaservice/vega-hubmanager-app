@@ -322,21 +322,13 @@ export default function App() {
               </TouchableOpacity>
             </View>
 
-            {/* Services + Price (Hub Manager CAN see price) */}
             <View style={S.detailCard}>
               <Text style={S.detailLabel}>🛠 SERVICES</Text>
               {(selJob.items||[{name:selJob.serviceType||'Home Cleaning'}]).map((item,i)=>(
                 <View key={i} style={{flexDirection:'row',justifyContent:'space-between',marginTop:10}}>
                   <Text style={{color:C.text2,flex:1}}>{item.name}{item.variant?` (${item.variant})`:''}</Text>
-                  {/* Hub manager sees price */}
-                  {item.price&&<Text style={{color:C.gold,fontWeight:'700'}}>₹{item.price}</Text>}
                 </View>
               ))}
-              <View style={{height:1,backgroundColor:C.border,marginVertical:10}}/>
-              <View style={{flexDirection:'row',justifyContent:'space-between'}}>
-                <Text style={{color:C.text,fontWeight:'700'}}>Total</Text>
-                <Text style={{color:C.blue,fontWeight:'900',fontSize:16}}>₹{selJob.amount||selJob.total||0}</Text>
-              </View>
             </View>
 
             {/* Delay flags */}
@@ -522,7 +514,7 @@ export default function App() {
                 {label:'Today',val:fmt(selWorker.earnings?.today||0)},
                 {label:'This Week',val:fmt(selWorker.earnings?.thisWeek||0)},
                 {label:'This Month',val:fmt(selWorker.earnings?.thisMonth||0)},
-                {label:'Monthly Salary',val:`₹${selWorker.salary||12000}`},
+  
               ].map((item,i)=>(
                 <View key={i} style={{flexDirection:'row',justifyContent:'space-between',marginTop:10}}>
                   <Text style={{color:C.muted,fontSize:13}}>{item.label}</Text>
@@ -594,7 +586,7 @@ export default function App() {
       <View style={{flexDirection:'row',flexWrap:'wrap',paddingHorizontal:12,gap:10,marginBottom:16}}>
         {[
           {label:"Today's Bookings",val:todayJobs.length,icon:'📦',color:C.blue},
-          {label:"Today's Revenue",val:fmt(todayRevenue),icon:'💰',color:C.gold},
+          {label:"Completed Today",val:todayJobs.filter(j=>j.status==='completed').length,icon:'✅',color:C.green},
           {label:'In Progress',val:inProgress.length,icon:'⚡',color:C.purple},
           {label:'Unassigned',val:unassigned.length,icon:'🚨',color:unassigned.length>0?C.red:C.green},
           {label:'Available Staff',val:workers.filter(w=>w.isAvailable&&w.status==='active'&&w.role!=='hub_manager').length,icon:'✅',color:C.green},
@@ -659,8 +651,7 @@ export default function App() {
                 <Text style={{color:C.text2,fontSize:12}}>{b.customerName||b.userName}</Text>
                 <Text style={{color:C.muted,fontSize:11,marginTop:1}}>{timeAgo(b.createdAt)}</Text>
               </View>
-              {/* Hub manager sees revenue */}
-              <Text style={{color:C.gold,fontWeight:'900'}}>₹{b.amount||b.total||0}</Text>
+              <Text style={{color:C.muted,fontSize:11}}>{timeAgo(b.createdAt)}</Text>
             </TouchableOpacity>
           );
         })}
@@ -713,9 +704,7 @@ export default function App() {
                       <Text style={{color:C.green,fontSize:12,marginTop:4}}>👩 {b.assignedWorkerName}</Text>:
                       <Text style={{color:C.red,fontSize:12,marginTop:4}}>⚠️ Needs assignment</Text>}
                   </View>
-                  {/* Hub manager sees price */}
                   <View style={{alignItems:'flex-end',gap:4}}>
-                    <Text style={{color:C.gold,fontWeight:'900',fontSize:15}}>₹{b.amount||b.total||0}</Text>
                     <Text style={{color:C.muted,fontSize:10}}>{timeAgo(b.createdAt)}</Text>
                   </View>
                 </View>
@@ -744,10 +733,7 @@ export default function App() {
     <View style={{flex:1}}>
       <View style={{padding:16,paddingBottom:8,flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}>
         <Text style={{color:C.text,fontWeight:'800',fontSize:17}}>Team ({workers.filter(w=>w.role!=='hub_manager').length})</Text>
-        <TouchableOpacity style={{backgroundColor:C.blue2,paddingHorizontal:16,paddingVertical:8,borderRadius:20,...SHADOW.glow}}
-          onPress={()=>setAddWorkerModal(true)}>
-          <Text style={{color:'#FFF',fontWeight:'700',fontSize:13}}>+ Add Worker</Text>
-        </TouchableOpacity>
+
       </View>
       <ScrollView style={{flex:1,padding:16}}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.blue}/>}>
@@ -786,9 +772,7 @@ export default function App() {
           <View style={{alignItems:'center',padding:60}}>
             <Text style={{fontSize:48}}>👥</Text>
             <Text style={{color:C.muted,marginTop:12,textAlign:'center'}}>No workers added yet</Text>
-            <TouchableOpacity style={[S.btn,{marginTop:20}]} onPress={()=>setAddWorkerModal(true)}>
-              <Text style={S.btnT}>+ Add First Worker</Text>
-            </TouchableOpacity>
+
           </View>
         )}
         <View style={{height:100}}/>
@@ -917,6 +901,77 @@ export default function App() {
     </ScrollView>
   );
 
+
+  // ATTENDANCE TAB
+  const AttendanceTab=()=>{
+    const [selDate,setSelDate]=useState(new Date().toISOString().split('T')[0]);
+    const markAttendance=async(worker,status)=>{
+      const dateKey=selDate.replace(/-/g,'');
+      await fbUpdate('workers',worker.id,{
+        [`attendance.${dateKey}`]:status,
+        [`attendance.lastUpdated`]:firestore.FieldValue.serverTimestamp(),
+        'attendance.todayStatus':status,
+      });
+      Alert.alert('✅ Marked',`${worker.name} marked as ${status}`);
+    };
+    const todayStr=new Date().toDateString();
+    return(
+      <ScrollView style={{flex:1,padding:16}}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.blue}/>}>
+        <Text style={{fontSize:17,fontWeight:'800',color:C.text,marginBottom:8}}>📋 Attendance</Text>
+        <Text style={{color:C.muted,fontSize:12,marginBottom:16}}>{todayStr}</Text>
+        {workers.filter(w=>w.role!=='hub_manager').length===0&&(
+          <View style={{alignItems:'center',padding:60}}>
+            <Text style={{fontSize:48}}>👥</Text>
+            <Text style={{color:C.muted,marginTop:12}}>No workers added yet</Text>
+          </View>
+        )}
+        {workers.filter(w=>w.role!=='hub_manager').map(w=>{
+          const todayStatus=w.attendance?.todayStatus||'Not Marked';
+          const statusColor=todayStatus==='Present'?C.green:todayStatus==='Absent'?C.red:todayStatus==='Leave'?C.gold:C.muted;
+          return(
+            <View key={w.id} style={[S.card,{marginBottom:12}]}>
+              <View style={{flexDirection:'row',alignItems:'center',marginBottom:14}}>
+                <View style={{width:44,height:44,borderRadius:22,backgroundColor:C.blueBg,alignItems:'center',justifyContent:'center',marginRight:12,borderWidth:1,borderColor:C.blueBd}}>
+                  <Text style={{color:C.blue,fontWeight:'900',fontSize:18}}>{w.name?.[0]||'?'}</Text>
+                </View>
+                <View style={{flex:1}}>
+                  <Text style={{color:C.text,fontWeight:'700',fontSize:15}}>{w.name}</Text>
+                  <Text style={{color:C.muted,fontSize:12}}>📞 {w.phone}</Text>
+                </View>
+                <View style={{paddingHorizontal:10,paddingVertical:4,borderRadius:10,
+                  backgroundColor:todayStatus==='Present'?C.greenBg:todayStatus==='Absent'?C.redBg:C.goldBg,
+                  borderWidth:0.5,borderColor:statusColor}}>
+                  <Text style={{color:statusColor,fontSize:11,fontWeight:'700'}}>{todayStatus}</Text>
+                </View>
+              </View>
+              <View style={{flexDirection:'row',gap:8}}>
+                {['Present','Absent','Leave','Half Day'].map(s=>(
+                  <TouchableOpacity key={s} onPress={()=>markAttendance(w,s)}
+                    style={{flex:1,padding:8,borderRadius:10,alignItems:'center',
+                      backgroundColor:todayStatus===s?
+                        s==='Present'?C.greenBg:s==='Absent'?C.redBg:C.goldBg
+                        :C.card2,
+                      borderWidth:1,
+                      borderColor:todayStatus===s?statusColor:C.border2}}>
+                    <Text style={{fontSize:10,fontWeight:'700',
+                      color:todayStatus===s?statusColor:C.muted,textAlign:'center'}}>{s}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <View style={{flexDirection:'row',justifyContent:'space-between',marginTop:12}}>
+                <Text style={{color:C.muted,fontSize:11}}>Present: {w.attendance?.daysPresent||0} days</Text>
+                <Text style={{color:C.muted,fontSize:11}}>Absent: {w.attendance?.daysAbsent||0} days</Text>
+                <Text style={{color:C.muted,fontSize:11}}>Leave: {w.attendance?.daysLeave||0} days</Text>
+              </View>
+            </View>
+          );
+        })}
+        <View style={{height:100}}/>
+      </ScrollView>
+    );
+  };
+
   // PROFILE TAB
   const ProfileTab=()=>(
     <ScrollView style={{flex:1,padding:16}}>
@@ -934,7 +989,7 @@ export default function App() {
         <Text style={{color:C.text2,fontWeight:'700',marginBottom:12}}>📊 Hub Stats</Text>
         {[
           {label:'Total Jobs Managed',val:jobs.length,color:C.blue},
-          {label:'Total Revenue',val:fmt(jobs.filter(j=>j.status==='completed').reduce((s,j)=>s+(j.amount||j.total||0),0)),color:C.gold},
+
           {label:'Workers in Team',val:workers.filter(w=>w.role!=='hub_manager').length,color:C.green},
           {label:'Complaints Open',val:openComplaints.length,color:openComplaints.length>0?C.red:C.green},
         ].map((item,i)=>(
@@ -958,11 +1013,12 @@ export default function App() {
 
   // TABS
   const TABS=[
-    {id:'dashboard',icon:'🏠',label:'Home', badge:0},
-    {id:'bookings', icon:'📦',label:'Bookings', badge:unassigned.length},
-    {id:'team',     icon:'👥',label:'Team', badge:0},
-    {id:'complaints',icon:'🧾',label:'Issues', badge:openComplaints.length},
-    {id:'profile',  icon:'👤',label:'Profile', badge:0},
+    {id:'dashboard',  icon:'🏠',label:'Home',      badge:0},
+    {id:'bookings',   icon:'📦',label:'Bookings',  badge:unassigned.length},
+    {id:'team',       icon:'👥',label:'Team',       badge:0},
+    {id:'attendance', icon:'📋',label:'Attendance', badge:0},
+    {id:'complaints', icon:'🧾',label:'Issues',     badge:openComplaints.length},
+    {id:'profile',    icon:'👤',label:'Profile',    badge:0},
   ];
 
   return(
@@ -990,6 +1046,7 @@ export default function App() {
           {tab==='dashboard'  &&<DashboardTab/>}
           {tab==='bookings'   &&<BookingsTab/>}
           {tab==='team'       &&<TeamTab/>}
+          {tab==='attendance' &&<AttendanceTab/>}
           {tab==='complaints' &&<ComplaintsTab/>}
           {tab==='profile'    &&<ProfileTab/>}
         </View>

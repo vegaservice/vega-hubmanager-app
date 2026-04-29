@@ -1,0 +1,8 @@
+node_modules/
+.expo/
+serviceAccountKey.json
+
+GoogleService-Info.plist
+package-lock.json
+.env
+*.log
