@@ -109,7 +109,7 @@ export default function App() {
   useEffect(()=>{
     if(!manager) return;
     // Real-time listeners
-    const unsubJobs=firestore().collection('jobs').orderBy('createdAt','desc').limit(100)
+    const unsubJobs=firestore().collection('bookings').orderBy('createdAt','desc').limit(100)
       .onSnapshot(snap=>setJobs(snap.docs.map(d=>({id:d.id,...d.data()}))));
     const unsubWorkers=firestore().collection('workers').where('isActive','==',true)
       .onSnapshot(snap=>setWorkers(snap.docs.map(d=>({id:d.id,...d.data()}))));
@@ -160,7 +160,7 @@ export default function App() {
   };
 
   const assignWorker=async(job,worker)=>{
-    const ok=await fbUpdate('jobs',job.id,{
+    const ok=await fbUpdate('bookings',job.id,{
       assignedWorkerId:worker.id,
       assignedWorkerName:worker.name,
       assignedWorkerPhone:worker.phone,
@@ -172,7 +172,7 @@ export default function App() {
   };
 
   const reassignWorker=async(job,worker)=>{
-    const ok=await fbUpdate('jobs',job.id,{
+    const ok=await fbUpdate('bookings',job.id,{
       assignedWorkerId:worker.id,
       assignedWorkerName:worker.name,
       assignedWorkerPhone:worker.phone,
@@ -182,7 +182,7 @@ export default function App() {
   };
 
   const updateJobStatus=async(job,status)=>{
-    await fbUpdate('jobs',job.id,{status,[`${status}At`]:firestore.FieldValue.serverTimestamp()});
+    await fbUpdate('bookings',job.id,{status,[`${status}At`]:firestore.FieldValue.serverTimestamp()});
     Alert.alert('Updated',`Job ${job.orderId||job.id?.slice(-6)} → ${status}`);
   };
 
@@ -227,9 +227,9 @@ export default function App() {
   // COMPUTED
   const todayStr=new Date().toDateString();
   const todayJobs=jobs.filter(j=>{const d=j.createdAt?.toDate?j.createdAt.toDate():new Date(j.createdAt||0);return d.toDateString()===todayStr;});
-  const unassigned=jobs.filter(j=>j.status==='confirmed');
+  const unassigned=jobs.filter(j=>j.status==='Confirmed'||j.status==='confirmed'||!j.assignedWorkerId);
   const inProgress=jobs.filter(j=>['on_the_way','in_progress'].includes(j.status));
-  const todayRevenue=todayJobs.filter(j=>j.status==='completed').reduce((s,j)=>s+(j.amount||j.total||0),0);
+  // Revenue hidden from Hub Manager
   const avgRating=jobs.filter(j=>j.rating).length?
     (jobs.filter(j=>j.rating).reduce((s,j)=>s+(j.rating||0),0)/jobs.filter(j=>j.rating).length).toFixed(1):'—';
   const openComplaints=complaints.filter(c=>c.status!=='resolved');
