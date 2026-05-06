@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "VEGA Hub Manager",
-    "slug": "vega-hub-manager",
+    "slug": "vega-home-services",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -11,7 +11,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#1A0800"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.vegavizag.hubmanager",

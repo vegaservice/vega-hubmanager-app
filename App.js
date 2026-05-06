@@ -713,6 +713,13 @@ export default function App() {
                     <Text style={{color:C.text,fontSize:14,fontWeight:'600'}}>{b.customerName||b.userName}</Text>
                     <Text style={{color:C.muted,fontSize:12,marginTop:2}}>📍 {(b.addressFull||'').substring(0,45)}</Text>
                     <Text style={{color:C.muted,fontSize:11,marginTop:2}}>📅 {b.slot||b.scheduledTime}</Text>
+                    {b.bookingMode==='recurring'&&b.recurFreq&&(
+                      <View style={{flexDirection:'row',alignItems:'center',gap:4,marginTop:3}}>
+                        <View style={{backgroundColor:'#FFF8E7',paddingHorizontal:7,paddingVertical:2,borderRadius:8,borderWidth:0.5,borderColor:'#D4A017'}}>
+                          <Text style={{color:'#B8860B',fontSize:10,fontWeight:'700'}}>🔄 {b.recurFreq}</Text>
+                        </View>
+                      </View>
+                    )}
                     {b.assignedWorkerName?
                       <Text style={{color:C.green,fontSize:12,marginTop:4}}>👩 {b.assignedWorkerName}</Text>:
                       <Text style={{color:C.red,fontSize:12,marginTop:4}}>⚠️ Needs assignment</Text>}
