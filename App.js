@@ -44,6 +44,9 @@ const timeAgo=(ts)=>{
 
 const fmt=(n)=>n>=100000?`₹${(n/100000).toFixed(1)}L`:n>=1000?`₹${(n/1000).toFixed(1)}K`:`₹${n||0}`;
 
+// ✅ FIX: Hub Manager phone whitelist — login works even without workers collection entry
+const HUB_MANAGER_PHONES = ['9999999998', '9133222344'];
+
 const JOB_STATUS={
   confirmed:{bg:C.blueBg,text:C.blue,label:'Needs Assignment'},
   assigned:{bg:C.goldBg,text:C.gold,label:'Assigned'},
@@ -137,10 +140,20 @@ export default function App() {
     setLoading(true);
     try{
       await confirm.confirm(otpVal);
-      // Check hub_manager role
+      // Check workers collection first
+      let mgr = null;
       const snap=await firestore().collection('workers').where('phone','==',phone).where('role','==','hub_manager').limit(1).get();
-      if(snap.empty){auth().signOut();setLoading(false);Alert.alert('Access Denied','Not registered as Hub Manager.');return;}
-      const mgr={id:snap.docs[0].id,...snap.docs[0].data()};
+      if(!snap.empty){
+        mgr={id:snap.docs[0].id,...snap.docs[0].data()};
+      } else if(HUB_MANAGER_PHONES.includes(phone)){
+        // ✅ Phone whitelisted — auto-create hub manager profile
+        const mgrId=`manager_${phone}`;
+        mgr={id:mgrId,name:'Hub Manager',phone,role:'hub_manager',currentArea:'Madhurawada',status:'active',isActive:true,isAvailable:false};
+        await firestore().collection('workers').doc(mgrId).set({...mgr,joinedAt:firestore.FieldValue.serverTimestamp()},{merge:true});
+      } else {
+        auth().signOut();setLoading(false);
+        Alert.alert('Access Denied','Not registered as Hub Manager. Contact admin: 9441270570');return;
+      }
       setManager(mgr); setLoading(false); setScreen('main');
     }catch(e){setLoading(false);Alert.alert('Wrong OTP',e.message);}
   };
@@ -227,7 +240,7 @@ export default function App() {
   // COMPUTED
   const todayStr=new Date().toDateString();
   const todayJobs=jobs.filter(j=>{const d=j.createdAt?.toDate?j.createdAt.toDate():new Date(j.createdAt||0);return d.toDateString()===todayStr;});
-  const unassigned=jobs.filter(j=>j.status==='Confirmed'||j.status==='confirmed'||!j.assignedWorkerId);
+  const unassigned=jobs.filter(j=>j.status==='confirmed'||!j.assignedWorkerId);
   const inProgress=jobs.filter(j=>['on_the_way','in_progress'].includes(j.status));
   // Revenue hidden from Hub Manager
   const avgRating=jobs.filter(j=>j.rating).length?
