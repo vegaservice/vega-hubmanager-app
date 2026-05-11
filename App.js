@@ -120,7 +120,7 @@ export default function App() {
       .onSnapshot(snap=>setComplaints(snap.docs.map(d=>({id:d.id,...d.data()}))));
     // FCM
     const unsubFCM=messaging().onMessage(async msg=>{
-      Alert.alert(msg.notification?.title||'🪷 VEGA',msg.notification?.body||'New update');
+      Alert.alert(msg.notification?.title||'�udbb7 VEGA',msg.notification?.body||'New update');
     });
     return()=>{ unsubJobs(); unsubWorkers(); unsubComplaints(); unsubFCM(); };
   },[manager]);
@@ -155,6 +155,16 @@ export default function App() {
         Alert.alert('Access Denied','Not registered as Hub Manager. Contact admin: 9441270570');return;
       }
       setManager(mgr); setLoading(false); setScreen('main');
+      // Save FCM token for push notifications
+      try {
+        await messaging().requestPermission();
+        const fcmToken = await messaging().getToken();
+        if (fcmToken && mgr.id) {
+          await firestore().collection('workers').doc(mgr.id).update({
+            fcmToken, fcmUpdatedAt: firestore.FieldValue.serverTimestamp()
+          });
+        }
+      } catch(fcmErr) { console.log('FCM token save:', fcmErr.message); }
     }catch(e){setLoading(false);Alert.alert('Wrong OTP',e.message);}
   };
 
@@ -240,7 +250,7 @@ export default function App() {
   // COMPUTED
   const todayStr=new Date().toDateString();
   const todayJobs=jobs.filter(j=>{const d=j.createdAt?.toDate?j.createdAt.toDate():new Date(j.createdAt||0);return d.toDateString()===todayStr;});
-  const unassigned=jobs.filter(j=>j.status==='confirmed'||!j.assignedWorkerId);
+  const unassigned=jobs.filter(j=>j.status?.toLowerCase()==='confirmed'&&!j.assignedWorkerId);
   const inProgress=jobs.filter(j=>['on_the_way','in_progress'].includes(j.status));
   // Revenue hidden from Hub Manager
   const avgRating=jobs.filter(j=>j.rating).length?
@@ -252,7 +262,7 @@ export default function App() {
     <View style={{flex:1,backgroundColor:C.bg,alignItems:'center',justifyContent:'center'}}>
       <StatusBar barStyle="light-content" backgroundColor={C.bg}/>
       <Animated.View style={{opacity:fadeAnim,alignItems:'center'}}>
-        <Text style={{fontSize:60}}>🪷</Text>
+        <Text style={{fontSize:60}}>�udbb7</Text>
         <Text style={{fontSize:34,fontWeight:'900',color:C.blue,letterSpacing:6,marginTop:12}}>VEGA</Text>
         <Text style={{fontSize:14,color:C.text2,marginTop:8,letterSpacing:2}}>HUB MANAGER</Text>
         <View style={{width:40,height:2,backgroundColor:C.blue,borderRadius:1,marginTop:16}}/>
@@ -266,7 +276,7 @@ export default function App() {
     <SafeAreaView style={{flex:1,backgroundColor:C.bg}}>
       <StatusBar barStyle="light-content" backgroundColor={C.bg}/>
       <View style={{flex:1,padding:24,justifyContent:'center'}}>
-        <Text style={{fontSize:32}}>🪷</Text>
+        <Text style={{fontSize:32}}>�udbb7</Text>
         <Text style={{fontSize:28,fontWeight:'900',color:C.blue,marginTop:12}}>Hub Manager</Text>
         <Text style={{fontSize:14,color:C.text2,marginTop:6,marginBottom:40}}>VEGA Operations Login</Text>
         <Text style={S.lbl}>Mobile Number</Text>
@@ -360,7 +370,7 @@ export default function App() {
 
             {/* Photos proof */}
             <View style={S.detailCard}>
-              <Text style={S.detailLabel}>📸 PHOTO PROOF</Text>
+              <Text style={S.detailLabel}}>📸 PHOTO PROOF</Text>
               <View style={{flexDirection:'row',gap:12,marginTop:10}}>
                 <View style={{flex:1,backgroundColor:(selJob.beforePhotos||[]).length>0?C.greenBg:C.redBg,borderRadius:12,padding:12,borderWidth:0.5,borderColor:(selJob.beforePhotos||[]).length>0?C.greenBd:C.redBd}}>
                   <Text style={{color:(selJob.beforePhotos||[]).length>0?C.green:C.red,fontWeight:'700',fontSize:12,textAlign:'center'}}>
@@ -378,7 +388,7 @@ export default function App() {
             {/* Professional */}
             {selJob.assignedWorkerName?(
               <View style={S.detailCard}>
-                <Text style={S.detailLabel}>👩 ASSIGNED PROFESSIONAL</Text>
+                <Text style={S.detailLabel}}>👩 ASSIGNED PROFESSIONAL</Text>
                 <Text style={{color:C.text,fontSize:15,fontWeight:'700',marginTop:8}}>{selJob.assignedWorkerName}</Text>
                 <View style={{flexDirection:'row',gap:10,marginTop:12}}>
                   <TouchableOpacity style={{flex:1,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:8,backgroundColor:C.greenBg,padding:12,borderRadius:12,borderWidth:0.5,borderColor:C.greenBd}}
@@ -393,20 +403,20 @@ export default function App() {
               </View>
             ):(
               <TouchableOpacity style={[S.btn,{marginBottom:12}]} onPress={()=>setAssignModal(true)}>
-                <Text style={S.btnT}>👩 Assign Professional Now</Text>
+                <Text style={S.btnT}}>👩 Assign Professional Now</Text>
               </TouchableOpacity>
             )}
 
             {/* OTP */}
             <View style={S.detailCard}>
-              <Text style={S.detailLabel}>🔐 BOOKING OTP</Text>
+              <Text style={S.detailLabel}}>🔐 BOOKING OTP</Text>
               <Text style={{color:C.gold,fontSize:32,fontWeight:'900',marginTop:8,letterSpacing:8}}>{selJob.otp}</Text>
               <Text style={{color:C.muted,fontSize:11,marginTop:4}}>Worker enters this to start service</Text>
             </View>
 
             {/* Status control */}
             <View style={S.detailCard}>
-              <Text style={S.detailLabel}>⚡ UPDATE STATUS</Text>
+              <Text style={S.detailLabel}}>⚡ UPDATE STATUS</Text>
               <View style={{flexDirection:'row',flexWrap:'wrap',gap:8,marginTop:12}}>
                 {Object.entries(JOB_STATUS).map(([st,sc])=>(
                   <TouchableOpacity key={st} onPress={()=>updateJobStatus(selJob,st)}
@@ -505,7 +515,7 @@ export default function App() {
 
             {/* Stats */}
             <View style={[S.detailCard,{marginBottom:12}]}>
-              <Text style={S.detailLabel}>📊 PERFORMANCE</Text>
+              <Text style={S.detailLabel}}>📊 PERFORMANCE</Text>
               {[
                 {label:'Jobs Completed',val:selWorker.totalJobsCompleted||0,color:C.green},
                 {label:'Performance Score',val:`${selWorker.performanceScore||85}%`,color:C.orange},
@@ -522,7 +532,7 @@ export default function App() {
 
             {/* Earnings — Hub Manager CAN see */}
             <View style={[S.detailCard,{marginBottom:12}]}>
-              <Text style={S.detailLabel}>💰 EARNINGS (ADMIN VISIBLE)</Text>
+              <Text style={S.detailLabel}}>💰 EARNINGS (ADMIN VISIBLE)</Text>
               {[
                 {label:'Today',val:fmt(selWorker.earnings?.today||0)},
                 {label:'This Week',val:fmt(selWorker.earnings?.thisWeek||0)},
@@ -538,7 +548,7 @@ export default function App() {
 
             {/* Worker Control */}
             <View style={[S.detailCard,{marginBottom:12}]}>
-              <Text style={S.detailLabel}>⚙️ WORKER CONTROL</Text>
+              <Text style={S.detailLabel}}>⚙️ WORKER CONTROL</Text>
               <Text style={{color:C.text2,fontSize:12,marginTop:8,marginBottom:14}}>Change worker status. Blocked workers cannot login or receive jobs.</Text>
               <View style={{flexDirection:'row',gap:10}}>
                 {[
@@ -570,7 +580,7 @@ export default function App() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.blue}/>}>
       <View style={{padding:20,paddingTop:8}}>
         <Text style={{fontSize:11,color:C.muted,letterSpacing:2}}>MADHURAWADA HUB</Text>
-        <Text style={{fontSize:24,fontWeight:'900',color:C.text,marginTop:4}}>Hub Dashboard 🪷</Text>
+        <Text style={{fontSize:24,fontWeight:'900',color:C.text,marginTop:4}}>Hub Dashboard �udbb7</Text>
         <Text style={{fontSize:13,color:C.muted}}>{new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}</Text>
       </View>
 
@@ -678,7 +688,7 @@ export default function App() {
     const [filter,setFilter]=useState('All');
     const filterMap={
       'All':jobs,
-      'Unassigned':jobs.filter(j=>j.status==='confirmed'),
+      'Unassigned':jobs.filter(j=>j.status?.toLowerCase()==='confirmed'&&!j.assignedWorkerId),
       'Active':jobs.filter(j=>['assigned','on_the_way','in_progress'].includes(j.status)),
       'Completed':jobs.filter(j=>j.status==='completed'),
     };
@@ -728,7 +738,7 @@ export default function App() {
                     <Text style={{color:C.muted,fontSize:10}}>{timeAgo(b.createdAt)}</Text>
                   </View>
                 </View>
-                {b.status==='confirmed'&&(
+                {b.status?.toLowerCase()==='confirmed'&&!b.assignedWorkerId&&(
                   <TouchableOpacity style={[S.btn,{paddingVertical:10,marginTop:10}]} onPress={()=>setSelJob(b)}>
                     <Text style={[S.btnT,{fontSize:13}]}>👩 Assign Now</Text>
                   </TouchableOpacity>
@@ -738,7 +748,7 @@ export default function App() {
           })}
           {shown.length===0&&(
             <View style={{alignItems:'center',padding:60}}>
-              <Text style={{fontSize:48}}>📭</Text>
+              <Text style={{fontSize:48}}>💭</Text>
               <Text style={{color:C.muted,marginTop:12}}>No {filter} bookings</Text>
             </View>
           )}
@@ -844,13 +854,13 @@ export default function App() {
     <ScrollView style={{flex:1,padding:16}}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.blue}/>}>
       <Text style={{fontSize:17,fontWeight:'800',color:C.text,marginBottom:16}}>
-        🧾 Complaints ({openComplaints.length} open)
+        🧧 Complaints ({openComplaints.length} open)
       </Text>
       {complaints.length===0&&(
         <View style={{alignItems:'center',padding:60}}>
           <Text style={{fontSize:48}}>✅</Text>
           <Text style={{color:C.green,fontSize:16,marginTop:12,fontWeight:'700'}}>No complaints</Text>
-          <Text style={{color:C.muted,marginTop:4}}>All customers are happy! 🪷</Text>
+          <Text style={{color:C.muted,marginTop:4}}>All customers are happy! �udbb7</Text>
         </View>
       )}
       {complaints.map(c=>{
@@ -902,7 +912,7 @@ export default function App() {
                     onEndEditing={e=>e.nativeEvent.text&&resolveComplaint(selComplaint,e.nativeEvent.text)}/>
                   <TouchableOpacity style={[S.btn,{backgroundColor:C.green2}]}
                     onPress={()=>resolveComplaint(selComplaint,'Resolved by hub manager')}>
-                    <Text style={S.btnT}>✅ Mark Resolved</Text>
+                    <Text style={S.btnT}}>✅ Mark Resolved</Text>
                   </TouchableOpacity>
                 </>
               )}
@@ -1037,7 +1047,7 @@ export default function App() {
     {id:'bookings',   icon:'📦',label:'Bookings',  badge:unassigned.length},
     {id:'team',       icon:'👥',label:'Team',       badge:0},
     {id:'attendance', icon:'📋',label:'Attendance', badge:0},
-    {id:'complaints', icon:'🧾',label:'Issues',     badge:openComplaints.length},
+    {id:'complaints', icon:'🧧',label:'Issues',     badge:openComplaints.length},
     {id:'profile',    icon:'👤',label:'Profile',    badge:0},
   ];
 
@@ -1047,7 +1057,7 @@ export default function App() {
       <SafeAreaView style={{flex:1}}>
         <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingHorizontal:16,paddingVertical:10,borderBottomWidth:0.5,borderBottomColor:C.border}}>
           <View style={{flexDirection:'row',alignItems:'center',gap:8}}>
-            <Text style={{fontSize:16}}>🪷</Text>
+            <Text style={{fontSize:16}}>�udbb7</Text>
             <Text style={{fontSize:15,fontWeight:'900',color:C.blue,letterSpacing:2}}>VEGA</Text>
             <View style={{backgroundColor:C.blueBg,paddingHorizontal:8,paddingVertical:2,borderRadius:8,borderWidth:0.5,borderColor:C.blueBd}}>
               <Text style={{color:C.blue,fontSize:9,fontWeight:'700',letterSpacing:1}}>HUB MGR</Text>
