@@ -194,19 +194,35 @@ export default function App() {
       assignedWorkerPhone:worker.phone,
       status:'assigned',
       assignedAt:firestore.FieldValue.serverTimestamp(),
-      // Hub manager can see price, worker cannot
+      // Ensure Worker App sees real service + customer name
+      serviceType:(job.items||[{name:'Home Cleaning'}])[0]?.name||'Home Cleaning',
+      customerName:job.userName||job.customerName||'Customer',
+      customerPhone:job.userPhone||job.customerPhone||'',
     });
-    if(ok){Alert.alert('✅ Assigned!',`${worker.name} assigned to job ${job.orderId||job.id?.slice(-6)}`);setAssignModal(false);setSelJob(null);}
+    if(ok){
+      // Mark worker unavailable (same as Admin App does)
+      try{await firestore().collection('workers').doc(worker.id).update({isAvailable:false,currentJobId:job.id});}catch(e){}
+      Alert.alert('✅ Assigned!',`${worker.name} assigned to job ${job.orderId||job.id?.slice(-6)}`);
+      setAssignModal(false);setSelJob(null);
+    }
   };
 
   const reassignWorker=async(job,worker)=>{
+    const prevWorkerId=job.assignedWorkerId;
     const ok=await fbUpdate('bookings',job.id,{
       assignedWorkerId:worker.id,
       assignedWorkerName:worker.name,
       assignedWorkerPhone:worker.phone,
       reassignedAt:firestore.FieldValue.serverTimestamp(),
     });
-    if(ok){Alert.alert('🔄 Reassigned!',`${worker.name} is now assigned.`);setAssignModal(false);}
+    if(ok){
+      // Free previous worker, mark new worker unavailable
+      if(prevWorkerId&&prevWorkerId!==worker.id){
+        try{await firestore().collection('workers').doc(prevWorkerId).update({isAvailable:true,currentJobId:null});}catch(e){}
+      }
+      try{await firestore().collection('workers').doc(worker.id).update({isAvailable:false,currentJobId:job.id});}catch(e){}
+      Alert.alert('🔄 Reassigned!',`${worker.name} is now assigned.`);setAssignModal(false);
+    }
   };
 
   const updateJobStatus=async(job,status)=>{
@@ -236,7 +252,7 @@ export default function App() {
       services:empServices,
       ratingAvg:4.9,totalReviews:0,totalJobsCompleted:0,
       performanceScore:85,
-      attendance:{jobsToday:0,jobsWeek:0,daysPresent:0,daysAbsent:0},
+      attendance:{jobsToday:0,jobsWeek:0,daysPresent:0,daysAbsent:0,daysLeave:0},
       earnings:{today:0,thisWeek:0,thisMonth:0,total:0},
       salary:12000,
       joinedAt:firestore.FieldValue.serverTimestamp(),
