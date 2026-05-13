@@ -768,46 +768,133 @@ export default function App() {
     <View style={{flex:1}}>
       <View style={{padding:16,paddingBottom:8,flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}>
         <Text style={{color:C.text,fontWeight:'800',fontSize:17}}>Team ({workers.filter(w=>w.role!=='hub_manager').length})</Text>
-
+        <TouchableOpacity style={{backgroundColor:C.blue2,paddingHorizontal:14,paddingVertical:8,borderRadius:20}}
+          onPress={()=>setAddWorkerModal(true)}>
+          <Text style={{color:'#FFF',fontWeight:'700',fontSize:13}}>+ Add Employee</Text>
+        </TouchableOpacity>
       </View>
       <ScrollView style={{flex:1,padding:16}}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.blue}/>}>
-        {workers.filter(w=>w.role!=='hub_manager').map(w=>{
-          const ws=WORKER_STATUS[w.status]||WORKER_STATUS.active;
-          return(
-            <TouchableOpacity key={w.id} style={[S.card,{marginBottom:10}]} onPress={()=>setSelWorker(w)}>
-              <View style={{flexDirection:'row',alignItems:'center'}}>
-                <View style={{width:48,height:48,borderRadius:24,backgroundColor:C.blueBg,alignItems:'center',justifyContent:'center',marginRight:14,borderWidth:1,borderColor:C.blueBd}}>
-                  <Text style={{color:C.blue,fontWeight:'900',fontSize:20}}>{w.name?.[0]||'?'}</Text>
-                </View>
-                <View style={{flex:1}}>
-                  <Text style={{color:C.text,fontWeight:'700',fontSize:15}}>{w.name}</Text>
-                  <Text style={{color:C.text2,fontSize:12}}>📞 {w.phone}</Text>
-                  <View style={{flexDirection:'row',gap:8,marginTop:4}}>
-                    <View style={{paddingHorizontal:8,paddingVertical:2,borderRadius:8,backgroundColor:ws.bg,borderWidth:0.5,borderColor:C.border2}}>
-                      <Text style={{color:ws.text,fontSize:10,fontWeight:'700',textTransform:'capitalize'}}>● {w.status}</Text>
+
+        {/* On Job Workers */}
+        {workers.filter(w=>w.role!=='hub_manager'&&!w.isAvailable&&w.status==='active').length>0&&(
+          <>
+            <Text style={{color:C.orange,fontWeight:'700',fontSize:13,marginBottom:10}}>⚡ Currently Working ({workers.filter(w=>w.role!=='hub_manager'&&!w.isAvailable&&w.status==='active').length})</Text>
+            {workers.filter(w=>w.role!=='hub_manager'&&!w.isAvailable&&w.status==='active').map(w=>{
+              const activeJob=jobs.find(j=>j.assignedWorkerId===w.id&&['on_the_way','in_progress'].includes(j.status));
+              return(
+                <TouchableOpacity key={w.id} style={[S.card,{marginBottom:10,borderColor:C.orangeBd,borderWidth:1}]} onPress={()=>setSelWorker(w)}>
+                  <View style={{flexDirection:'row',alignItems:'center'}}>
+                    <View style={{width:48,height:48,borderRadius:24,backgroundColor:C.orangeBg,alignItems:'center',justifyContent:'center',marginRight:14,borderWidth:1,borderColor:C.orangeBd}}>
+                      <Text style={{color:C.orange,fontWeight:'900',fontSize:20}}>{w.name?.[0]||'?'}</Text>
                     </View>
-                    <View style={{paddingHorizontal:8,paddingVertical:2,borderRadius:8,backgroundColor:w.isAvailable?C.greenBg:C.orangeBg,borderWidth:0.5,borderColor:w.isAvailable?C.greenBd:C.orangeBd}}>
-                      <Text style={{color:w.isAvailable?C.green:C.orange,fontSize:10,fontWeight:'700'}}>{w.isAvailable?'Free':'On Job'}</Text>
+                    <View style={{flex:1}}>
+                      <Text style={{color:C.text,fontWeight:'700',fontSize:15}}>{w.name}</Text>
+                      <Text style={{color:C.text2,fontSize:12}}>📞 {w.phone}</Text>
+                      {activeJob&&<Text style={{color:C.orange,fontSize:11,marginTop:3}}>🔧 {activeJob.serviceType||'Service'} · {activeJob.orderId||activeJob.id?.slice(-6)}</Text>}
+                      {activeJob&&<Text style={{color:C.muted,fontSize:10,marginTop:1}}>{(JOB_STATUS[activeJob.status]||{}).label||activeJob.status}</Text>}
+                    </View>
+                    <View style={{alignItems:'flex-end',gap:4}}>
+                      <View style={{paddingHorizontal:8,paddingVertical:3,borderRadius:8,backgroundColor:C.orangeBg,borderWidth:0.5,borderColor:C.orangeBd}}>
+                        <Text style={{color:C.orange,fontSize:9,fontWeight:'700'}}>● On Job</Text>
+                      </View>
+                      <Text style={{color:C.gold,fontSize:11}}>⭐ {w.ratingAvg||4.9}</Text>
+                      <TouchableOpacity onPress={()=>Linking.openURL(`tel:+91${w.phone}`)}>
+                        <Text style={{fontSize:18}}>📞</Text>
+                      </TouchableOpacity>
                     </View>
                   </View>
+                </TouchableOpacity>
+              );
+            })}
+          </>
+        )}
+
+        {/* Available Workers */}
+        {workers.filter(w=>w.role!=='hub_manager'&&w.isAvailable&&w.status==='active').length>0&&(
+          <>
+            <Text style={{color:C.green,fontWeight:'700',fontSize:13,marginBottom:10,marginTop:4}}>✅ Available ({workers.filter(w=>w.role!=='hub_manager'&&w.isAvailable&&w.status==='active').length})</Text>
+            {workers.filter(w=>w.role!=='hub_manager'&&w.isAvailable&&w.status==='active').map(w=>(
+              <TouchableOpacity key={w.id} style={[S.card,{marginBottom:10}]} onPress={()=>setSelWorker(w)}>
+                <View style={{flexDirection:'row',alignItems:'center'}}>
+                  <View style={{width:48,height:48,borderRadius:24,backgroundColor:C.blueBg,alignItems:'center',justifyContent:'center',marginRight:14,borderWidth:1,borderColor:C.blueBd}}>
+                    <Text style={{color:C.blue,fontWeight:'900',fontSize:20}}>{w.name?.[0]||'?'}</Text>
+                  </View>
+                  <View style={{flex:1}}>
+                    <Text style={{color:C.text,fontWeight:'700',fontSize:15}}>{w.name}</Text>
+                    <Text style={{color:C.text2,fontSize:12}}>📞 {w.phone}</Text>
+                    <Text style={{color:C.muted,fontSize:11,marginTop:2}}>📍 {w.currentArea||'Madhurawada'}</Text>
+                  </View>
+                  <View style={{alignItems:'flex-end',gap:4}}>
+                    <View style={{paddingHorizontal:8,paddingVertical:3,borderRadius:8,backgroundColor:C.greenBg,borderWidth:0.5,borderColor:C.greenBd}}>
+                      <Text style={{color:C.green,fontSize:9,fontWeight:'700'}}>● Free</Text>
+                    </View>
+                    <Text style={{color:C.gold,fontSize:11}}>⭐ {w.ratingAvg||4.9}</Text>
+                    <Text style={{color:C.muted,fontSize:10}}>{w.totalJobsCompleted||0} jobs</Text>
+                    <TouchableOpacity onPress={()=>Linking.openURL(`tel:+91${w.phone}`)}>
+                      <Text style={{fontSize:18}}>📞</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
-                <View style={{alignItems:'flex-end',gap:4}}>
-                  <Text style={{color:C.gold,fontSize:12}}>⭐ {w.ratingAvg||4.9}</Text>
-                  <Text style={{color:C.muted,fontSize:11}}>{w.totalJobsCompleted||0} jobs</Text>
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
+
+        {/* Inactive/Suspended Workers */}
+        {workers.filter(w=>w.role!=='hub_manager'&&w.status!=='active').length>0&&(
+          <>
+            <Text style={{color:C.muted,fontWeight:'700',fontSize:13,marginBottom:10,marginTop:4}}>⏸ Inactive / Suspended</Text>
+            {workers.filter(w=>w.role!=='hub_manager'&&w.status!=='active').map(w=>{
+              const ws=WORKER_STATUS[w.status]||WORKER_STATUS.active;
+              return(
+                <TouchableOpacity key={w.id} style={[S.card,{marginBottom:10,opacity:0.6}]} onPress={()=>setSelWorker(w)}>
+                  <View style={{flexDirection:'row',alignItems:'center'}}>
+                    <View style={{width:48,height:48,borderRadius:24,backgroundColor:C.card2,alignItems:'center',justifyContent:'center',marginRight:14}}>
+                      <Text style={{color:C.muted,fontWeight:'900',fontSize:20}}>{w.name?.[0]||'?'}</Text>
+                    </View>
+                    <View style={{flex:1}}>
+                      <Text style={{color:C.text,fontWeight:'700',fontSize:15}}>{w.name}</Text>
+                      <Text style={{color:C.text2,fontSize:12}}>📞 {w.phone}</Text>
+                    </View>
+                    <View style={{paddingHorizontal:8,paddingVertical:3,borderRadius:8,backgroundColor:ws.bg}}>
+                      <Text style={{color:ws.text,fontSize:9,fontWeight:'700',textTransform:'capitalize'}}>● {w.status}</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </>
+        )}
+
+        {/* Hub Managers section */}
+        {workers.filter(w=>w.role==='hub_manager').length>0&&(
+          <>
+            <Text style={{color:C.blue,fontWeight:'700',fontSize:13,marginBottom:10,marginTop:8}}>👔 Hub Managers ({workers.filter(w=>w.role==='hub_manager').length})</Text>
+            {workers.filter(w=>w.role==='hub_manager').map(w=>(
+              <TouchableOpacity key={w.id} style={[S.card,{marginBottom:10,borderColor:C.blueBd,borderWidth:1}]} onPress={()=>setSelWorker(w)}>
+                <View style={{flexDirection:'row',alignItems:'center'}}>
+                  <View style={{width:48,height:48,borderRadius:24,backgroundColor:C.blueBg,alignItems:'center',justifyContent:'center',marginRight:14,borderWidth:1,borderColor:C.blueBd}}>
+                    <Text style={{color:C.blue,fontWeight:'900',fontSize:20}}>{w.name?.[0]||'H'}</Text>
+                  </View>
+                  <View style={{flex:1}}>
+                    <Text style={{color:C.text,fontWeight:'700',fontSize:15}}>{w.name}</Text>
+                    <Text style={{color:C.text2,fontSize:12}}>📞 {w.phone}</Text>
+                    <Text style={{color:C.blue,fontSize:11,marginTop:2}}>Hub Manager · {w.currentArea||'Madhurawada'}</Text>
+                  </View>
                   <TouchableOpacity onPress={()=>Linking.openURL(`tel:+91${w.phone}`)}>
                     <Text style={{fontSize:18}}>📞</Text>
                   </TouchableOpacity>
                 </View>
-              </View>
-            </TouchableOpacity>
-          );
-        })}
-        {workers.filter(w=>w.role!=='hub_manager').length===0&&(
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
+
+        {workers.length===0&&(
           <View style={{alignItems:'center',padding:60}}>
             <Text style={{fontSize:48}}>👥</Text>
-            <Text style={{color:C.muted,marginTop:12,textAlign:'center'}}>No workers added yet</Text>
-
+            <Text style={{color:C.muted,marginTop:12,textAlign:'center'}}>No employees added yet.{'\n'}Tap "+ Add Employee" to get started.</Text>
           </View>
         )}
         <View style={{height:100}}/>
@@ -1007,6 +1094,142 @@ export default function App() {
     );
   };
 
+  // LIVE LOCATION TAB
+  const LiveLocationTab=()=>{
+    const locMinsAgo=(w)=>{
+      if(!w.lastLocationAt) return null;
+      const d=w.lastLocationAt.toDate?w.lastLocationAt.toDate():new Date(w.lastLocationAt);
+      return Math.floor((Date.now()-d.getTime())/60000);
+    };
+    const openMaps=(w)=>{
+      if(!w.lastLat||!w.lastLng){Alert.alert('No Location','Worker location not shared yet.');return;}
+      const label=encodeURIComponent(w.name||'Worker');
+      Linking.openURL(`geo:${w.lastLat},${w.lastLng}?q=${w.lastLat},${w.lastLng}(${label})`);
+    };
+    const onJobWorkers=workers.filter(w=>w.role!=='hub_manager'&&!w.isAvailable&&w.status==='active');
+    const freeWorkers=workers.filter(w=>w.role!=='hub_manager'&&w.isAvailable&&w.status==='active');
+    const managers=workers.filter(w=>w.role==='hub_manager');
+    return(
+      <ScrollView style={{flex:1,padding:16}}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.blue}/>}>
+        <Text style={{fontSize:17,fontWeight:'800',color:C.text,marginBottom:4}}>📍 Live Locations</Text>
+        <Text style={{color:C.muted,fontSize:12,marginBottom:16}}>Workers ping location every 30s · Tap card to open in Maps</Text>
+
+        {/* On Job */}
+        {onJobWorkers.length>0&&(
+          <>
+            <Text style={{color:C.orange,fontWeight:'700',fontSize:13,marginBottom:10}}>⚡ On Job ({onJobWorkers.length})</Text>
+            {onJobWorkers.map(w=>{
+              const mins=locMinsAgo(w);
+              const hasLoc=!!(w.lastLat&&w.lastLng);
+              const activeJob=jobs.find(j=>j.assignedWorkerId===w.id&&['on_the_way','in_progress'].includes(j.status));
+              return(
+                <TouchableOpacity key={w.id} style={[S.card,{marginBottom:10,borderColor:C.orangeBd,borderWidth:1}]}
+                  onPress={()=>openMaps(w)}>
+                  <View style={{flexDirection:'row',alignItems:'center',marginBottom:10}}>
+                    <View style={{width:42,height:42,borderRadius:21,backgroundColor:C.orangeBg,alignItems:'center',justifyContent:'center',marginRight:12,borderWidth:1,borderColor:C.orangeBd}}>
+                      <Text style={{color:C.orange,fontWeight:'900',fontSize:17}}>{w.name?.[0]||'?'}</Text>
+                    </View>
+                    <View style={{flex:1}}>
+                      <Text style={{color:C.text,fontWeight:'700'}}>{w.name}</Text>
+                      {activeJob&&<Text style={{color:C.orange,fontSize:11,marginTop:1}}>🔧 {activeJob.serviceType||'Service'} · {(JOB_STATUS[activeJob.status]||{}).label||activeJob.status}</Text>}
+                    </View>
+                    <View style={{paddingHorizontal:8,paddingVertical:3,borderRadius:8,backgroundColor:C.orangeBg,borderWidth:0.5,borderColor:C.orangeBd}}>
+                      <Text style={{color:C.orange,fontSize:9,fontWeight:'700'}}>● On Job</Text>
+                    </View>
+                  </View>
+                  <View style={{backgroundColor:C.card2,borderRadius:10,padding:10,flexDirection:'row',alignItems:'center',gap:8}}>
+                    <Text style={{fontSize:16}}>{hasLoc?'📍':'❓'}</Text>
+                    <View style={{flex:1}}>
+                      {hasLoc?(
+                        <Text style={{color:C.text2,fontSize:12}}>{w.lastLat?.toFixed(5)}°N, {w.lastLng?.toFixed(5)}°E</Text>
+                      ):(
+                        <Text style={{color:C.muted,fontSize:12}}>Location not shared yet</Text>
+                      )}
+                      {mins!==null&&<Text style={{color:C.muted,fontSize:10,marginTop:2}}>Updated {mins<2?'just now':`${mins}m ago`}</Text>}
+                    </View>
+                    {hasLoc&&<Text style={{color:C.blue,fontSize:12,fontWeight:'700'}}>Open ›</Text>}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </>
+        )}
+
+        {/* Free Workers */}
+        {freeWorkers.length>0&&(
+          <>
+            <Text style={{color:C.green,fontWeight:'700',fontSize:13,marginBottom:10,marginTop:8}}>✅ Available ({freeWorkers.length})</Text>
+            {freeWorkers.map(w=>{
+              const mins=locMinsAgo(w);
+              const hasLoc=!!(w.lastLat&&w.lastLng);
+              return(
+                <TouchableOpacity key={w.id} style={[S.card,{marginBottom:10}]} onPress={()=>openMaps(w)}>
+                  <View style={{flexDirection:'row',alignItems:'center'}}>
+                    <View style={{width:42,height:42,borderRadius:21,backgroundColor:C.greenBg,alignItems:'center',justifyContent:'center',marginRight:12,borderWidth:1,borderColor:C.greenBd}}>
+                      <Text style={{color:C.green,fontWeight:'900',fontSize:17}}>{w.name?.[0]||'?'}</Text>
+                    </View>
+                    <View style={{flex:1}}>
+                      <Text style={{color:C.text,fontWeight:'700'}}>{w.name}</Text>
+                      {hasLoc?(
+                        <Text style={{color:C.muted,fontSize:11,marginTop:1}}>📍 {w.lastLat?.toFixed(5)}°N{mins!==null?` · ${mins<2?'just now':`${mins}m ago`}`:''}
+                        </Text>
+                      ):(
+                        <Text style={{color:C.muted,fontSize:11,marginTop:1}}>📍 No location data</Text>
+                      )}
+                    </View>
+                    <View style={{paddingHorizontal:8,paddingVertical:3,borderRadius:8,backgroundColor:C.greenBg,borderWidth:0.5,borderColor:C.greenBd}}>
+                      <Text style={{color:C.green,fontSize:9,fontWeight:'700'}}>● Free</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </>
+        )}
+
+        {/* Hub Managers */}
+        {managers.length>0&&(
+          <>
+            <Text style={{color:C.blue,fontWeight:'700',fontSize:13,marginBottom:10,marginTop:8}}>👔 Hub Managers ({managers.length})</Text>
+            {managers.map(w=>{
+              const mins=locMinsAgo(w);
+              const hasLoc=!!(w.lastLat&&w.lastLng);
+              return(
+                <TouchableOpacity key={w.id} style={[S.card,{marginBottom:10,borderColor:C.blueBd,borderWidth:1}]} onPress={()=>openMaps(w)}>
+                  <View style={{flexDirection:'row',alignItems:'center'}}>
+                    <View style={{width:42,height:42,borderRadius:21,backgroundColor:C.blueBg,alignItems:'center',justifyContent:'center',marginRight:12,borderWidth:1,borderColor:C.blueBd}}>
+                      <Text style={{color:C.blue,fontWeight:'900',fontSize:17}}>{w.name?.[0]||'H'}</Text>
+                    </View>
+                    <View style={{flex:1}}>
+                      <Text style={{color:C.text,fontWeight:'700'}}>{w.name}</Text>
+                      {hasLoc?(
+                        <Text style={{color:C.muted,fontSize:11,marginTop:1}}>📍 {w.lastLat?.toFixed(5)}°N{mins!==null?` · ${mins<2?'just now':`${mins}m ago`}`:''}</Text>
+                      ):(
+                        <Text style={{color:C.muted,fontSize:11,marginTop:1}}>📍 No location data</Text>
+                      )}
+                    </View>
+                    <View style={{paddingHorizontal:8,paddingVertical:3,borderRadius:8,backgroundColor:C.blueBg,borderWidth:0.5,borderColor:C.blueBd}}>
+                      <Text style={{color:C.blue,fontSize:9,fontWeight:'700'}}>Hub Mgr</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </>
+        )}
+
+        {workers.length===0&&(
+          <View style={{alignItems:'center',padding:60}}>
+            <Text style={{fontSize:48}}>📍</Text>
+            <Text style={{color:C.muted,marginTop:12,textAlign:'center'}}>No workers added yet</Text>
+          </View>
+        )}
+        <View style={{height:100}}/>
+      </ScrollView>
+    );
+  };
+
   // PROFILE TAB
   const ProfileTab=()=>(
     <ScrollView style={{flex:1,padding:16}}>
@@ -1051,7 +1274,8 @@ export default function App() {
     {id:'dashboard',  icon:'🏠',label:'Home',      badge:0},
     {id:'bookings',   icon:'📦',label:'Bookings',  badge:unassigned.length},
     {id:'team',       icon:'👥',label:'Team',       badge:0},
-    {id:'attendance', icon:'📋',label:'Attendance', badge:0},
+    {id:'livemap',    icon:'📍',label:'Live',       badge:0},
+    {id:'attendance', icon:'📋',label:'Attend',    badge:0},
     {id:'complaints', icon:'🧧',label:'Issues',     badge:openComplaints.length},
     {id:'profile',    icon:'👤',label:'Profile',    badge:0},
   ];
@@ -1081,13 +1305,16 @@ export default function App() {
           {tab==='dashboard'  &&<DashboardTab/>}
           {tab==='bookings'   &&<BookingsTab/>}
           {tab==='team'       &&<TeamTab/>}
+          {tab==='livemap'    &&<LiveLocationTab/>}
           {tab==='attendance' &&<AttendanceTab/>}
           {tab==='complaints' &&<ComplaintsTab/>}
           {tab==='profile'    &&<ProfileTab/>}
         </View>
-        <View style={{flexDirection:'row',borderTopWidth:0.5,borderTopColor:C.border,backgroundColor:C.card,paddingBottom:Platform.OS==='ios'?20:8,paddingTop:8}}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}
+          style={{maxHeight:62,borderTopWidth:0.5,borderTopColor:C.border,backgroundColor:C.card}}
+          contentContainerStyle={{flexDirection:'row',paddingBottom:Platform.OS==='ios'?18:6,paddingTop:8,paddingHorizontal:4}}>
           {TABS.map(t=>(
-            <TouchableOpacity key={t.id} style={{flex:1,alignItems:'center',gap:2}} onPress={()=>setTab(t.id)}>
+            <TouchableOpacity key={t.id} style={{paddingHorizontal:12,alignItems:'center',gap:2}} onPress={()=>setTab(t.id)}>
               <View style={{position:'relative'}}>
                 <Text style={{fontSize:tab===t.id?22:18}}>{t.icon}</Text>
                 {t.badge>0&&(
@@ -1099,7 +1326,7 @@ export default function App() {
               <Text style={{fontSize:9,fontWeight:tab===t.id?'800':'500',color:tab===t.id?C.blue:C.muted}}>{t.label}</Text>
             </TouchableOpacity>
           ))}
-        </View>
+        </ScrollView>
       </SafeAreaView>
       <JobDetailModal/>
       <WorkerDetailModal/>
