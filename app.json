@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "VEGA Hub Manager",
-    "slug": "vega-home-services",
+    "slug": "vega-hubmanager",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -17,7 +17,12 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.vegavizag.hubmanager",
-      "buildNumber": "1"
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "VEGA Hub Manager needs camera for worker verification photos",
+        "NSPhotoLibraryUsageDescription": "VEGA Hub Manager needs photo access for service documentation",
+        "NSLocationWhenInUseUsageDescription": "VEGA Hub Manager needs location to track worker positions"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -26,7 +31,16 @@
       },
       "package": "com.vegavizag.hubmanager",
       "versionCode": 1,
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ]
     },
     "plugins": [
       "@react-native-firebase/app",

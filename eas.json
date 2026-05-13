@@ -8,6 +8,9 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "ios": {
+        "simulator": true
       }
     },
     "preview": {
@@ -15,6 +18,10 @@
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease"
+      },
+      "ios": {
+        "simulator": false,
+        "enterpriseProvisioning": "adhoc"
       }
     },
     "production": {
@@ -23,6 +30,19 @@
       },
       "ios": {
         "simulator": false
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./google-play-key.json",
+        "track": "internal"
+      },
+      "ios": {
+        "appleId": "mahesh1331@icloud.com",
+        "ascAppId": "",
+        "appleTeamId": ""
       }
     }
   }
