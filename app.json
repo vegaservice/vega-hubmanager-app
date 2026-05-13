@@ -18,6 +18,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.vegavizag.hubmanager",
       "buildNumber": "1",
+      "appleTeamId": "73RYNYV3JU",
       "infoPlist": {
         "NSCameraUsageDescription": "VEGA Hub Manager needs camera for worker verification photos",
         "NSPhotoLibraryUsageDescription": "VEGA Hub Manager needs photo access for service documentation",

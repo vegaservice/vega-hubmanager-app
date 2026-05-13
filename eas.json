@@ -40,9 +40,9 @@
         "track": "internal"
       },
       "ios": {
-        "appleId": "mahesh1331@icloud.com",
-        "ascAppId": "",
-        "appleTeamId": ""
+        "appleId": "YOUR_APPLE_EMAIL@icloud.com",
+        "ascAppId": "6769144703",
+        "appleTeamId": "73RYNYV3JU"
       }
     }
   }
