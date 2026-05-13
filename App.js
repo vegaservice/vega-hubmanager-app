@@ -48,7 +48,7 @@ const fmt=(n)=>n>=100000?`₹${(n/100000).toFixed(1)}L`:n>=1000?`₹${(n/1000).t
 const HUB_MANAGER_PHONES = ['9999999998', '9133222344'];
 
 const JOB_STATUS={
-  confirmed:{bg:C.blueBg,text:C.blue,label:'Needs Assignment'},
+  confirmed:{bg:C.redBg,text:C.red,label:'Needs Assignment'},
   assigned:{bg:C.goldBg,text:C.gold,label:'Assigned'},
   on_the_way:{bg:C.greenBg,text:C.green,label:'On the Way'},
   in_progress:{bg:C.purpleBg,text:C.purple,label:'In Progress'},
@@ -154,6 +154,11 @@ export default function App() {
         auth().signOut();setLoading(false);
         Alert.alert('Access Denied','Not registered as Hub Manager. Contact admin: 9441270570');return;
       }
+      // Save FCM token so Cloud Functions can push notifications to this device
+      try{
+        const fcmTok=await messaging().getToken();
+        if(fcmTok) await firestore().collection('workers').doc(mgr.id).update({fcmToken:fcmTok});
+      }catch(e){console.log('FCM token error:',e);}
       setManager(mgr); setLoading(false); setScreen('main');
       // Save FCM token for push notifications
       try {
@@ -866,7 +871,7 @@ export default function App() {
       {complaints.map(c=>{
         const statusColors={
           open:{bg:C.redBg,text:C.red,bd:C.redBd},
-          'in-progress':{bg:C.goldBg,text:C.gold,bd:C.goldBd},
+          'in_progress':{bg:C.goldBg,text:C.gold,bd:C.goldBd},
           resolved:{bg:C.greenBg,text:C.green,bd:C.greenBd},
         };
         const sc=statusColors[c.status]||statusColors.open;
