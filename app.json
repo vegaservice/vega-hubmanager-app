@@ -16,7 +16,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.vegavizag.hubmanager",
+      "bundleIdentifier": "com.vegaservice.hubmanager",
       "buildNumber": "1",
       "appleTeamId": "73RYNYV3JU",
       "infoPlist": {
@@ -30,7 +30,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#E8520A"
       },
-      "package": "com.vegavizag.hubmanager",
+      "package": "com.vegaservice.hubmanager",
       "versionCode": 1,
       "googleServicesFile": "./google-services.json",
       "permissions": [
