@@ -19,7 +19,9 @@
       "bundleIdentifier": "com.vegavizag.hubmanager",
       "buildNumber": "1",
       "appleTeamId": "73RYNYV3JU",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "VEGA Hub Manager needs camera for worker verification photos",
         "NSPhotoLibraryUsageDescription": "VEGA Hub Manager needs photo access for service documentation",
         "NSLocationWhenInUseUsageDescription": "VEGA Hub Manager needs location to track worker positions"
